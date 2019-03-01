@@ -1,11 +1,11 @@
 package LinkedList
 
-//Date: 2019/03/01
-//Email: xc8801@126.com
-
-import (
-	"fmt"
-)
+/*
+ * Date: 2019/03/01
+ * Email: xc8801@126.com
+ *
+ * Time Complexity:O(n), Space Complexity:O(n)
+ */
 
 type Node struct {
 	data interface{}
@@ -22,15 +22,18 @@ func NewLinkedList() *LinkedList {
 }
 
 func (list *LinkedList) Lenght() uint32 {
-	index := 0
+	var index uint32
 	current := list.head
+
+	if current == nil {
+		return index
+	}
 
 	for current.next != nil {
 		index++
 		current = current.next
 	}
-
-	return index
+	return index + 1
 }
 
 func (list *LinkedList) InsertFirst(data interface{}) {
@@ -64,9 +67,19 @@ func (list *LinkedList) RemoveFirst() bool {
 		return false
 	}
 
-	current := list.head
+	len := list.Lenght()
+
+	if len == 1 {
+		list.head.data = nil
+		list.tail = nil
+		list.head = nil
+		return true
+	}
+
+	list.head.data = nil
 	list.head = list.head.next
-	current = &Node{}
+
+	return true
 }
 
 func (list *LinkedList) RemoveLast() bool {
@@ -77,21 +90,30 @@ func (list *LinkedList) RemoveLast() bool {
 	len := list.Lenght()
 	current := list.head
 
-	for i := 0; i < len; i++ {
+	if len == 1 {
+		list.head.data = nil
+		list.tail = nil
+		list.head = nil
+		return true
+	}
+
+	for i := uint32(1); i < len-1; i++ {
 		current = current.next
 	}
 
+	list.tail.data = nil
 	list.tail = current
-	current.next.data = nil
-	current.next = nil
+	list.tail.next = nil
+
+	return true
 }
 
-func (list *ListedList) GetFirst() (interface{}, bool) {
+func (list *LinkedList) GetFirst() (interface{}, bool) {
 	if list.head == nil {
 		return nil, false
 	}
 
-	return list.head, true
+	return list.head.data, true
 }
 
 func (list *LinkedList) GetLast() (interface{}, bool) {
@@ -99,5 +121,5 @@ func (list *LinkedList) GetLast() (interface{}, bool) {
 		return nil, false
 	}
 
-	return list.tail, true
+	return list.tail.data, true
 }
