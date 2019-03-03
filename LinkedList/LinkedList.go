@@ -4,7 +4,8 @@ package LinkedList
  * Date: 2019/03/01
  * Email: xc8801@126.com
  *
- * Time Complexity:O(n), Space Complexity:O(n)
+ * Insert Time Complexity:O(1), Find Time Complexity:O(n)
+ * Space Complexity:O(n)
  */
 
 type Node struct {
@@ -13,8 +14,8 @@ type Node struct {
 }
 
 type LinkedList struct {
-	head *Node
-	tail *Node
+	head   *Node
+	lenght uint32
 }
 
 func NewLinkedList() *LinkedList {
@@ -22,89 +23,65 @@ func NewLinkedList() *LinkedList {
 }
 
 func (list *LinkedList) Lenght() uint32 {
-	var index uint32
-	current := list.head
+	return list.lenght
+}
 
-	if current == nil {
-		return index
-	}
-
-	for current.next != nil {
-		index++
-		current = current.next
-	}
-	return index + 1
+func (list *LinkedList) IsEmpty() bool {
+	return list.head == nil
 }
 
 func (list *LinkedList) InsertFirst(data interface{}) {
 	node := &Node{data: data}
 
-	if list.head == nil {
+	if list.IsEmpty() {
 		list.head = node
-		list.tail = node
 		return
 	}
 
 	node.next = list.head
 	list.head = node
+	list.lenght++
 }
 
 func (list *LinkedList) InsertLast(data interface{}) {
 	node := &Node{data: data}
 
-	if list.head == nil {
+	current, ok := list.GetNodeByIndex(list.lenght)
+	if ok {
+		current.next = node
+	} else {
+		node.next = list.head
 		list.head = node
-		list.tail = node
-		return
 	}
+	list.lenght++
 
-	list.tail.next = node
-	list.tail = node
 }
 
 func (list *LinkedList) RemoveFirst() bool {
-	if list.head == nil {
+	if list.IsEmpty() {
 		return false
-	}
-
-	len := list.Lenght()
-
-	if len == 1 {
-		list.head.data = nil
-		list.tail = nil
-		list.head = nil
-		return true
 	}
 
 	list.head.data = nil
 	list.head = list.head.next
+	list.lenght--
 
 	return true
 }
 
 func (list *LinkedList) RemoveLast() bool {
-	if list.tail == nil {
+	if list.IsEmpty() {
 		return false
 	}
 
-	len := list.Lenght()
-	current := list.head
-
-	if len == 1 {
-		list.head.data = nil
-		list.tail = nil
-		list.head = nil
-		return true
+	current, ok := list.GetNodeByIndex(list.lenght - 1)
+	if !ok {
+		return false
 	}
 
-	for i := uint32(1); i < len-1; i++ {
-		current = current.next
-	}
-
-	list.tail.data = nil
-	list.tail = current
-	list.tail.next = nil
-
+	current.next.data = nil
+	current.next = nil
+	list.lenght--
 	return true
 }
 
@@ -117,9 +94,27 @@ func (list *LinkedList) GetFirst() (interface{}, bool) {
 }
 
 func (list *LinkedList) GetLast() (interface{}, bool) {
-	if list.tail == nil {
+	if list.IsEmpty() {
 		return nil, false
 	}
 
-	return list.tail.data, true
+	node, ok := list.GetNodeByIndex(list.lenght)
+
+	if ok {
+		return node.data, ok
+	}
+	return nil, ok
+}
+
+func (list *LinkedList) GetNodeByIndex(index uint32) (*Node, bool) {
+	if index > list.lenght || index == 0 {
+		return nil, false
+	}
+
+	current := list.head
+	for count := uint32(1); count < index; count++ {
+		current = current.next
+	}
+
+	return current, true
 }
