@@ -9,7 +9,9 @@ package SkipList
  */
 
 import (
+	"fmt"
 	"math/rand"
+	"time"
 )
 
 type Node struct {
@@ -43,7 +45,7 @@ type SkipList struct {
 
 const (
 	MAX_LEVEL = 32
-	DEFAULT_P = 0.25 // p^10
+	DEFAULT_P = 0.5 // p^10
 )
 
 func NewSkipList(level uint16) *SkipList {
@@ -67,33 +69,53 @@ func (list *SkipList) SetP(p float64) bool {
 	return true
 }
 
-func (list *SkipList) randLevel() (level uint16) {
-	for level = uint16(0); level < list.maxLevel && rand.Float64() < list.p; {
+func (list *SkipList) randLevel() uint16 {
+	level := uint16(1)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	for r.Float64() < list.p {
 		level++
 	}
-	return
+
+	if level > list.maxLevel {
+		level = list.maxLevel
+	}
+
+	return level
 }
 
 func (list *SkipList) Insert(newScore int, newValue interface{}) {
-	var forwardNode *Node
-	var backwardNodes = list.head
+	var next *Node
+	var prevs = list.head
 
 	newLevel := list.randLevel() //[1~maxLevel]
 	newNode := NewNode(newLevel, newScore, newValue)
 
-	for level := list.maxLevel - 1; level >= 0; level-- {
-		forwardNode = backwardNodes[level]
+	for level := list.maxLevel - 1; level <= list.maxLevel; level-- {
+		next = prevs[level]
 
-		for forwardNode.score <= newScore {
-			backwardNodes = forwardNode.forward
-			forwardNode = forwardNode.forward[level]
+		for next != nil && next.score <= newScore {
+			prevs = next.forward
+			next = next.forward[level]
 		}
 
-		if level <= newLevel {
-			newNode.forward[level] = backwardNodes[level]
-			backwardNodes[level] = newNode
+		if level <= newLevel-1 {
+			newNode.forward[level] = prevs[level]
+			prevs[level] = newNode
 		}
 	}
 
 	list.lenght++
+}
+
+func (list *SkipList) Display() {
+
+	var idx = 0
+	next := list.head[0]
+
+	for next != nil {
+		fmt.Println(next, idx)
+		next = next.forward[0]
+		idx++
+	}
 }
