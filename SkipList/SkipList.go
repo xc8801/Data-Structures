@@ -14,38 +14,16 @@ import (
 	"time"
 )
 
-type Node struct {
-	forward []*Node
-	score   int
-	value   interface{}
-}
-
-func NewNode(level uint16, score int, value interface{}) *Node {
-	return &Node{
-		score:   score,
-		value:   value,
-		forward: make([]*Node, level),
-	}
-}
-
-func (n *Node) GetLevel() int {
-	return len(n.forward)
-}
-
-func (n *Node) hasNext() bool {
-	return n.GetLevel() != 0
-}
-
 type SkipList struct {
 	p        float64
-	head     []*Node
+	head     ForwardNode
 	lenght   uint32
 	maxLevel uint16
 }
 
 const (
 	MAX_LEVEL = 32
-	DEFAULT_P = 0.5 // p^10
+	DEFAULT_P = 0.6 // p^10
 )
 
 func NewSkipList(level uint16) *SkipList {
@@ -55,7 +33,7 @@ func NewSkipList(level uint16) *SkipList {
 
 	return &SkipList{
 		p:        DEFAULT_P, // range (0~1)
-		head:     make([]*Node, level),
+		head:     NewForwardNode(level),
 		lenght:   0,
 		maxLevel: level,
 	}
@@ -84,38 +62,80 @@ func (list *SkipList) randLevel() uint16 {
 	return level
 }
 
-func (list *SkipList) Insert(newScore int, newValue interface{}) {
+func (list *SkipList) GetPreNode(score int) (*Node, []ForwardNode) {
 	var next *Node
 	var prevs = list.head
-
-	newLevel := list.randLevel() //[1~maxLevel]
-	newNode := NewNode(newLevel, newScore, newValue)
+	var updates = make([]ForwardNode, list.maxLevel)
 
 	for level := list.maxLevel - 1; level <= list.maxLevel; level-- {
 		next = prevs[level]
 
-		for next != nil && next.score <= newScore {
+		for next != nil && next.score < score {
 			prevs = next.forward
 			next = next.forward[level]
 		}
 
-		if level <= newLevel-1 {
-			newNode.forward[level] = prevs[level]
-			prevs[level] = newNode
-		}
+		updates[level] = prevs
+	}
+
+	return next, updates
+}
+
+func (list *SkipList) Insert(newScore int, newValue interface{}) {
+
+	newLevel := list.randLevel() //[1~maxLevel]
+	newNode := NewNode(newLevel, newScore, newValue)
+
+	currNode, updateNodes := list.GetPreNode(newScore)
+
+	if currNode != nil && currNode.score == newScore {
+		currNode.value = newValue
+		return
+	}
+
+	for level := newLevel - 1; level <= newLevel; level-- {
+		newNode.forward[level] = updateNodes[level][level]
+		updateNodes[level][level] = newNode
 	}
 
 	list.lenght++
 }
 
-func (list *SkipList) Display() {
+func (list *SkipList) Remove(score int) bool {
+	currNode, updateNodes := list.GetPreNode(score)
 
-	var idx = 0
-	next := list.head[0]
-
-	for next != nil {
-		fmt.Println(next, idx)
-		next = next.forward[0]
-		idx++
+	if currNode == nil || currNode.score != score {
+		return false
 	}
+
+	list.lenght--
+	currLevel := currNode.GetLevel()
+
+	for level := currLevel - 1; level <= currLevel; level-- {
+		updateNodes[level][level] = currNode.forward[level]
+	}
+
+	currNode.Clear()
+	return true
+}
+
+func (list *SkipList) Get(score int) (interface{}, bool) {
+	currNode, _ := list.GetPreNode(score)
+
+	if currNode == nil || currNode.score != score {
+		return nil, false
+	}
+
+	return currNode.value, true
+}
+
+func (list *SkipList) Display() {
+	next := list.head
+
+	for next != nil && next[0] != nil {
+		fmt.Println("Display:", next[0].score, next[0])
+		next = next[0].forward
+	}
+
+	time.Sleep(time.Second)
 }
