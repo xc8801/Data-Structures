@@ -1,0 +1,6 @@
+#HashMap 常用数据结构之一
+
+#1.编程语言Python中dict，Go中的Map等皆为此结构实现。
+#2.通常来说时间复杂度为O(1)，在没有碰撞情况下。
+#3.解决冲突常用方式：
+    1.链接方法，链接的数据结构可以为：Array，Linkdlist，SkipList,RedBlackTree.
