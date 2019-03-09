@@ -43,6 +43,10 @@ func NewLinkedListNode(entry *Entry) *LinkedListNode {
 	}
 }
 
+func (list *LinkedList) Empty() bool {
+	return list.Lenght() == uint32(0)
+}
+
 func (list *LinkedList) HasNext() bool {
 	if list.lenght == 0 || list.index >= list.lenght {
 		return false
@@ -122,6 +126,7 @@ func (list *LinkedList) Get(key string) (interface{}, bool) {
 }
 
 func (list *LinkedList) Search(key string) (*LinkedListNode, *LinkedListNode, bool) {
+
 	currNode := list.head
 	preNode := list.head
 

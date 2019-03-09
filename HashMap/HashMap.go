@@ -59,10 +59,15 @@ func (hm *HashMap) Del(key string) bool {
 	var keysIdx uint32
 
 	bucketIdx := hm.hashFunc(key, hm.bucketCap)
+	if hm.bucket[bucketIdx] == nil || hm.bucket[bucketIdx].Empty() {
+		return false
+	}
+
 	if keysIdx, ok = hm.bucket[bucketIdx].Remove(key); !ok {
 		return false
 	}
 
+	hm.lenght--
 	hm.keys = append(hm.keys[:keysIdx], hm.keys[keysIdx+1:]...)
 	hm.values = append(hm.values[:keysIdx], hm.values[keysIdx+1:]...)
 

@@ -53,4 +53,10 @@ func TestHashMapCase(t *testing.T) {
 
 	fmt.Println(hashMap.keys)
 	fmt.Println(hashMap.values)
+
+	hashMap.Del(testCase[1])
+	fmt.Println(hashMap.keys)
+	fmt.Println(hashMap.values)
+
+	fmt.Println(hashMap.lenght)
 }
