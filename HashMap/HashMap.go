@@ -23,12 +23,14 @@ type HashMap struct {
 	lenght     uint32
 
 	bucketCap uint32
-	bucket    []*LinkedList
-	temp      []*LinkedList
+	bucket    []*LinkedList //Real Store
+	temp      []*LinkedList //Resize
 
+	//Python Keys(), Values()
 	keys   []string
 	values []interface{}
 
+	//HashMethod
 	hashFunc func(key string, hashLen uint32) uint32
 }
 
@@ -68,6 +70,7 @@ func (hm *HashMap) Del(key string) bool {
 	}
 
 	hm.lenght--
+	//TODO, 删除数据可以存放临时链表队列，下次添加直接替换
 	hm.keys = append(hm.keys[:keysIdx], hm.keys[keysIdx+1:]...)
 	hm.values = append(hm.values[:keysIdx], hm.values[keysIdx+1:]...)
 
@@ -79,7 +82,6 @@ func (hm *HashMap) Search(key string) (*LinkedListNode, bool) {
 	defer hm.Unlock()
 
 	bucketIdx := hm.hashFunc(key, hm.bucketCap)
-
 	node, _, ok := hm.bucket[bucketIdx].Search(key)
 
 	return node, ok
@@ -93,18 +95,18 @@ func (hm *HashMap) Set(key string, value interface{}) {
 	hm.keys = append(hm.keys, key)
 	hm.values = append(hm.values, value)
 
-	if hm.loadFactor > hm.GetRealLoadFactor() {
-		bucketIdx := hm.hashFunc(key, hm.bucketCap)
-		hm.AddLinkedList(key, value, bucketIdx, hm.lenght)
-		return
-	}
-	//fmt.Println("#####Resize && Transfer", hm.bucketCap, hm.GetRealLoadFactor())
 	//Resize && Transfer
-	newBucketCap := hm.Resize()
-	hm.Transfer(newBucketCap)
+	if hm.loadFactor < hm.GetRealLoadFactor() {
+		//fmt.Println("#####Resize && Transfer", hm.bucketCap, hm.GetRealLoadFactor())
+		newBucketCap := hm.resize()
+		hm.transfer(newBucketCap)
+	}
+
+	bucketIdx := hm.hashFunc(key, hm.bucketCap)
+	hm.addLinkedList(key, value, bucketIdx, hm.lenght)
 }
 
-func (hm *HashMap) AddLinkedList(key string, value interface{}, bucketIdx, idx uint32) {
+func (hm *HashMap) addLinkedList(key string, value interface{}, bucketIdx, idx uint32) {
 	//fmt.Println("######AddLinkedList:", bucketIdx, hm.bucketCap)
 	if hm.bucket[bucketIdx] == nil {
 		hm.bucket[bucketIdx] = NewLinkedList()
@@ -113,21 +115,21 @@ func (hm *HashMap) AddLinkedList(key string, value interface{}, bucketIdx, idx u
 	hm.bucket[bucketIdx].Insert(key, value, idx)
 }
 
-func (hm *HashMap) Resize() uint32 {
+func (hm *HashMap) resize() uint32 {
 	newBucketCap := hm.bucketCap * 2
 	hm.temp = make([]*LinkedList, newBucketCap)
 
 	return newBucketCap
 }
 
-func (hm *HashMap) Transfer(bucketCap uint32) {
+func (hm *HashMap) transfer(bucketCap uint32) {
 	for idx, oldKey := range hm.keys {
 		if oldKey == "" {
 			continue
 		}
 		oldValue := hm.values[idx]
 		bucketIdx := hm.hashFunc(oldKey, bucketCap)
-		hm.AddTempLinkedList(oldKey, oldValue, bucketIdx, uint32(idx))
+		hm.addTempLinkedList(oldKey, oldValue, bucketIdx, uint32(idx))
 	}
 
 	hm.bucket = hm.temp
@@ -135,7 +137,7 @@ func (hm *HashMap) Transfer(bucketCap uint32) {
 	hm.temp = nil
 }
 
-func (hm *HashMap) AddTempLinkedList(key string, value interface{}, bucketIdx, idx uint32) {
+func (hm *HashMap) addTempLinkedList(key string, value interface{}, bucketIdx, idx uint32) {
 	if hm.temp[bucketIdx] == nil {
 		hm.temp[bucketIdx] = NewLinkedList()
 	}

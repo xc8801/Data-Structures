@@ -9,9 +9,9 @@ package HashMap
  */
 
 type Entry struct {
-	key       string
-	value     interface{}
-	keysIndex uint32
+	key       string      //HashMap Key
+	value     interface{} //HashMap Value
+	keysIndex uint32      //HashMap Keys Index
 }
 
 type LinkedListNode struct {
@@ -19,6 +19,7 @@ type LinkedListNode struct {
 	next *LinkedListNode
 }
 
+//Single LinkedList
 type LinkedList struct {
 	head   *LinkedListNode
 	lenght uint32
@@ -112,8 +113,8 @@ func (list *LinkedList) Insert(key string, value interface{}, keysIdx uint32) *L
 
 	node.next = list.head
 	list.head = node
-
 	list.lenght++
+
 	return node
 }
 
